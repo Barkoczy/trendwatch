@@ -35,11 +35,22 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'sk_SK',
     siteName: 'TrendWatch',
+    images: [
+      {
+        url: 'https://static.storage.quickbiteschronicles.com/trendwatch-social.jpg',
+        width: 1376,
+        height: 768,
+        alt: 'TrendWatch | Najpopulárnejšie YouTube videá',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'TrendWatch | YouTube Trendy',
     description: 'Objavte najpopulárnejšie YouTube videá z celého sveta',
+    images: [
+      'https://static.storage.quickbiteschronicles.com/trendwatch-social.jpg',
+    ],
   },
   manifest: '/manifest.json',
 };
