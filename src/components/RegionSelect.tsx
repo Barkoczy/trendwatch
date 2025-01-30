@@ -42,15 +42,17 @@ const RegionSelect = ({
               className="mb-2 w-full"
             />
           </div>
-          {filteredRegions.length > 0 ? (
-            filteredRegions.map((region) => (
-              <SelectItem key={region.code} value={region.code}>
-                {region.name}
-              </SelectItem>
-            ))
-          ) : (
-            <div className="text-muted-foreground p-2">Žiadne výsledky</div>
-          )}
+          <div className="max-h-60 overflow-y-auto">
+            {filteredRegions.length > 0 ? (
+              filteredRegions.map((region) => (
+                <SelectItem key={region.code} value={region.code}>
+                  {region.name}
+                </SelectItem>
+              ))
+            ) : (
+              <div className="text-muted-foreground p-2">Žiadne výsledky</div>
+            )}
+          </div>
         </SelectContent>
       </Select>
     </div>
