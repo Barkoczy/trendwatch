@@ -1,101 +1,141 @@
-import Image from "next/image";
+'use client';
 
-export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li>Save and see your changes instantly.</li>
-        </ol>
+import React from 'react';
+import { Loader2 } from 'lucide-react';
+import VideoCard from '../components/VideoCard';
+import { useYouTubeTrending } from '@/hooks/useYouTubeTrending';
+import { useSettings } from '@/hooks/useSettings';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import RegionSelect from '@/components/RegionSelect';
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:min-w-44"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+const resultOptions = [8, 12, 24, 48];
+
+const Home: React.FC = () => {
+  const { settings, updateSettings, isLoaded } = useSettings();
+  const { videos, isLoading, error } = useYouTubeTrending({
+    regionCode: settings.region,
+    maxResults: settings.maxResults,
+    includeShorts: settings.includeShorts,
+  });
+
+  const handleRegionChange = (value: string) => {
+    updateSettings({ region: value });
+  };
+
+  const handleMaxResultsChange = (value: number) => {
+    updateSettings({ maxResults: value });
+  };
+
+  const handleShortsToggle = (checked: boolean) => {
+    updateSettings({ includeShorts: checked });
+  };
+
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="flex min-h-[200px] items-center justify-center">
+          <Loader2 className="text-primary h-8 w-8 animate-spin" />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
+      );
+    }
+
+    if (error) {
+      return (
+        <Alert variant="destructive" className="mb-6">
+          <AlertDescription>
+            Nastala chyba pri načítaní videí. Skúste to prosím neskôr.
+          </AlertDescription>
+        </Alert>
+      );
+    }
+
+    if (!videos.length) {
+      return (
+        <Alert className="mb-6">
+          <AlertDescription>
+            Neboli nájdené žiadne videá pre zvolený región.
+          </AlertDescription>
+        </Alert>
+      );
+    }
+
+    return (
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {videos.map((video) => (
+          <VideoCard
+            key={video.id}
+            videoId={video.id}
+            title={video.snippet.title}
+            thumbnail={video.snippet.thumbnails.high.url}
+            channelTitle={video.snippet.channelTitle}
           />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        ))}
+      </div>
+    );
+  };
+
+  if (!isLoaded) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="text-primary h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-b from-gray-100 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      <div className="dark:bg-background sticky top-[56px] z-40 w-full border-b border-gray-200 bg-white dark:border-slate-800 dark:backdrop-blur">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex flex-col gap-4 sm:flex-row">
+            <RegionSelect
+              value={settings.region}
+              onChange={handleRegionChange}
+            />
+
+            <div className="flex flex-1 flex-col gap-1">
+              <Label className="text-foreground mb-2">Počet výsledkov</Label>
+              <div className="flex flex-wrap gap-2">
+                {resultOptions.map((option) => (
+                  <button
+                    key={option}
+                    onClick={() => handleMaxResultsChange(option)}
+                    className={`rounded-md px-4 py-2 transition-colors ${
+                      settings.maxResults === option
+                        ? 'bg-primary text-primary-foreground'
+                        : 'bg-muted hover:bg-muted/80 text-muted-foreground'
+                    }`}
+                  >
+                    {option}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex flex-1 flex-col gap-1">
+              <Label className="text-foreground mb-2">Nastavenia</Label>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="shorts-toggle"
+                  checked={settings.includeShorts}
+                  onCheckedChange={handleShortsToggle}
+                />
+                <Label
+                  htmlFor="shorts-toggle"
+                  className="text-foreground cursor-pointer"
+                >
+                  Zahrnúť Shorts
+                </Label>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-8">{renderContent()}</div>
     </div>
   );
-}
+};
+
+export default Home;

@@ -1,36 +1,33 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
-
-## Getting Started
-
-First, run the development server:
+# TrendWatch
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Pre YouTube API v3 parameter `chart` má momentálne iba jedinú dostupnú hodnotu:
 
-## Learn More
+- `mostPopular`: Získa najpopulárnejšie videá pre danú krajinu
 
-To learn more about Next.js, take a look at the following resources:
+Je to jediná možnosť, ktorá je momentálne podporovaná v YouTube Data API v3. V minulosti existovali aj iné hodnoty ako napríklad 'top_rated' alebo 'most_viewed', ale tie boli odstránené v novších verziách API.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Ak by ste chceli filtrovať videá iným spôsobom, museli by ste použiť iné API endpointy a parametre:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Namiesto `videos` endpointu by ste mohli použiť `search` endpoint s parametrami:
 
-## Deploy on Vercel
+- `order` parameter s hodnotami:
+  - `date` (najnovšie)
+  - `rating` (najlepšie hodnotené)
+  - `relevance` (najrelevantnejšie)
+  - `title` (abecedne podľa názvu)
+  - `videoCount` (podľa počtu videí)
+  - `viewCount` (podľa počtu zhliadnutí)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+2. Alebo môžete použiť dodatočné parametre pre `videos` endpoint:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `videoCategoryId` (pre filtrovanie podľa kategórie)
+- `regionCode` (ktorý už používame)
+- `maxResults` (ktorý už používame)
