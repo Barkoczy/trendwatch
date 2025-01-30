@@ -1,2 +1,2 @@
-[build]
-  install = "npm ci --legacy-peer-deps"
+[phases.install]
+  cmds = ['npm ci --legacy-peer-deps']
