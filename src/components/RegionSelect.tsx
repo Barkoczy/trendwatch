@@ -1,3 +1,5 @@
+'use client';
+
 import { useState } from 'react';
 import {
   Select,
@@ -7,7 +9,6 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { regions } from '@/constants/regions';
 
 const RegionSelect = ({
@@ -26,9 +27,6 @@ const RegionSelect = ({
 
   return (
     <div className="flex flex-1 flex-col gap-1">
-      <Label htmlFor="region" className="text-foreground mb-2">
-        Región
-      </Label>
       <Select value={value} onValueChange={onChange}>
         <SelectTrigger className="w-full">
           <SelectValue placeholder="Vyberte región" />

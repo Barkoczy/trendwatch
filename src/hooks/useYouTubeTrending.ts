@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { getCache, setCache } from '@/libs/RedisClient';
+import { UserSettings } from '@/types/settings';
 
 interface Video {
   id: string;
@@ -14,17 +15,7 @@ interface Video {
   };
 }
 
-interface UseYouTubeTrendingProps {
-  regionCode: string;
-  maxResults: number;
-  includeShorts: boolean;
-}
-
-export function useYouTubeTrending({
-  regionCode,
-  maxResults,
-  includeShorts,
-}: UseYouTubeTrendingProps) {
+export function useYouTubeTrending(settings: UserSettings) {
   const [videos, setVideos] = useState<Video[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,57 +25,63 @@ export function useYouTubeTrending({
       setIsLoading(true);
       setError(null);
 
-      const cacheKey = `youtube:trending:${regionCode}:${maxResults}:${includeShorts}`;
-      let cachedData: string | null = null;
+      // Vytvoríme URL parametre z nastavení
+      const params = new URLSearchParams();
+      Object.entries(settings).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          params.append(key, value.toString());
+        }
+      });
+
+      const cacheKey = `youtube:${Array.from(params.entries())
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, value]) => `${key}:${value}`)
+        .join(':')}`;
 
       try {
-        // 🛠 Skúsime najskôr načítať z Redis cache
-        cachedData = await getCache(cacheKey);
+        // Skúsime najprv načítať z Redis cache
+        const cachedData = await getCache(cacheKey);
 
-        if (!cachedData) {
-          console.warn(
-            '⚠️ Redis nie je dostupný alebo cache neexistuje, volám API...'
-          );
-
-          // 🛠 Zavoláme API priamo, ak Redis nefunguje alebo cache chýba
-          const response = await fetch(
-            `/api/trending?regionCode=${regionCode}&maxResults=${maxResults}&includeShorts=${includeShorts}`,
-            { next: { revalidate: 3600 } } // Cacheujeme odpoveď na 1 hodinu
-          );
-
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || 'Nepodarilo sa načítať videá');
-          }
-
-          const data = await response.json();
-
-          if (
-            !data.items ||
-            !Array.isArray(data.items) ||
-            data.items.length === 0
-          ) {
-            throw new Error('Neboli nájdené žiadne videá pre zvolený región.');
-          }
-
-          cachedData = JSON.stringify(data.items);
-
-          // 🛠 Ak Redis funguje, uložíme tam dáta
-          await setCache(cacheKey, cachedData, 3600);
+        if (cachedData) {
+          console.log('✅ Načítané z Redis cache:', cacheKey);
+          setVideos(JSON.parse(cachedData));
+          return;
         }
 
-        setVideos(JSON.parse(cachedData));
+        console.log('⚠️ Cache miss, fetching from API:', cacheKey);
+
+        const response = await fetch(`/api/videos?${params.toString()}`);
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Nepodarilo sa načítať videá');
+        }
+
+        const data = await response.json();
+
+        if (
+          !data.items ||
+          !Array.isArray(data.items) ||
+          data.items.length === 0
+        ) {
+          throw new Error('Neboli nájdené žiadne videá pre zadané kritériá.');
+        }
+
+        // Uložíme do Redis cache
+        await setCache(cacheKey, JSON.stringify(data.items), 3600);
+
+        setVideos(data.items);
       } catch (err) {
         console.error('❌ Chyba pri načítaní:', err);
         setError(err instanceof Error ? err.message : 'Vyskytla sa chyba');
-        setVideos([]); // Zabezpečíme, že sa nezobrazí starý obsah
+        setVideos([]);
       } finally {
         setIsLoading(false);
       }
     };
 
     fetchVideos();
-  }, [regionCode, maxResults, includeShorts]);
+  }, [settings]);
 
   return { videos, isLoading, error };
 }

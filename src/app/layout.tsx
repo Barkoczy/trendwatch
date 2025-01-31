@@ -3,7 +3,6 @@ import type { Metadata, Viewport } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import { cn } from '@/utils/shadcn';
 import { ThemeProvider } from '@/providers/ThemeProvider';
-import Header from '@/components/Header';
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -79,10 +78,7 @@ export default function RootLayout({
         )}
         suppressHydrationWarning
       >
-        <ThemeProvider>
-          <Header />
-          {children}
-        </ThemeProvider>
+        <ThemeProvider>{children}</ThemeProvider>
       </body>
     </html>
   );

@@ -5,32 +5,12 @@ import { Loader2 } from 'lucide-react';
 import VideoCard from '../components/VideoCard';
 import { useYouTubeTrending } from '@/hooks/useYouTubeTrending';
 import { useSettings } from '@/hooks/useSettings';
-import { Label } from '@/components/ui/label';
-import { Switch } from '@/components/ui/switch';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import RegionSelect from '@/components/RegionSelect';
-
-const resultOptions = [8, 12, 24, 48];
+import Header from '@/components/Header';
 
 const Home: React.FC = () => {
   const { settings, updateSettings, isLoaded } = useSettings();
-  const { videos, isLoading, error } = useYouTubeTrending({
-    regionCode: settings.region,
-    maxResults: settings.maxResults,
-    includeShorts: settings.includeShorts,
-  });
-
-  const handleRegionChange = (value: string) => {
-    updateSettings({ region: value });
-  };
-
-  const handleMaxResultsChange = (value: number) => {
-    updateSettings({ maxResults: value });
-  };
-
-  const handleShortsToggle = (checked: boolean) => {
-    updateSettings({ includeShorts: checked });
-  };
+  const { videos, isLoading, error } = useYouTubeTrending(settings);
 
   const renderContent = () => {
     if (isLoading) {
@@ -55,7 +35,7 @@ const Home: React.FC = () => {
       return (
         <Alert className="mb-6">
           <AlertDescription>
-            Neboli nájdené žiadne videá pre zvolený región.
+            Neboli nájdené žiadne videá pre zvolené kritériá.
           </AlertDescription>
         </Alert>
       );
@@ -85,56 +65,12 @@ const Home: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-100 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
-      <div className="dark:bg-background sticky top-[56px] z-40 w-full border-b border-gray-200 bg-white dark:border-slate-800 dark:backdrop-blur">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex flex-col gap-4 sm:flex-row">
-            <RegionSelect
-              value={settings.region}
-              onChange={handleRegionChange}
-            />
-
-            <div className="flex flex-1 flex-col gap-1">
-              <Label className="text-foreground mb-2">Počet výsledkov</Label>
-              <div className="flex flex-wrap gap-2">
-                {resultOptions.map((option) => (
-                  <button
-                    key={option}
-                    onClick={() => handleMaxResultsChange(option)}
-                    className={`rounded-md px-4 py-2 transition-colors ${
-                      settings.maxResults === option
-                        ? 'bg-primary text-primary-foreground'
-                        : 'bg-muted hover:bg-muted/80 text-muted-foreground'
-                    }`}
-                  >
-                    {option}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="flex flex-1 flex-col gap-1">
-              <Label className="text-foreground mb-2">Nastavenia</Label>
-              <div className="flex items-center space-x-2">
-                <Switch
-                  id="shorts-toggle"
-                  checked={settings.includeShorts}
-                  onCheckedChange={handleShortsToggle}
-                />
-                <Label
-                  htmlFor="shorts-toggle"
-                  className="text-foreground cursor-pointer"
-                >
-                  Zahrnúť Shorts
-                </Label>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="container mx-auto px-4 py-8">{renderContent()}</div>
-    </div>
+    <>
+      <Header settings={settings} onSettingsChange={updateSettings} />
+      <main className="min-h-screen bg-gradient-to-b from-gray-100 to-white dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+        <div className="container mx-auto px-4 py-8">{renderContent()}</div>
+      </main>
+    </>
   );
 };
 

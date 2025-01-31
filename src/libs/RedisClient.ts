@@ -1,5 +1,4 @@
 'use server';
-
 import Redis from 'ioredis';
 
 let redisClient: Redis | null = null;
@@ -7,8 +6,19 @@ let retryCount = 0;
 const MAX_RETRIES = 5;
 const RETRY_INTERVAL = 3 * 60 * 1000; // 3 minúty v milisekundách
 
+// Funkcia na kontrolu, či je Redis povolený
+function isRedisEnabled(): boolean {
+  return process.env.REDIS_ON?.toLowerCase() === 'true';
+}
+
 // Funkcia na vytvorenie Redis klienta
 function createRedisClient() {
+  // Ak Redis nie je povolený, vrátime null
+  if (!isRedisEnabled()) {
+    console.log('ℹ️ Redis je vypnutý (REDIS_ON nie je nastavené na "true")');
+    return null;
+  }
+
   const client = new Redis({
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379', 10),
@@ -56,7 +66,7 @@ try {
 
 // Funkcia na opätovný pokus o pripojenie po 3 minútach
 function reconnectRedis() {
-  if (!redisClient) {
+  if (!redisClient && isRedisEnabled()) {
     console.log('🔄 Opätovne sa pokúšam pripojiť k Redis...');
     redisClient = createRedisClient();
   }

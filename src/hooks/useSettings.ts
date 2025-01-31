@@ -1,10 +1,13 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { UserSettings } from '@/types/settings';
 
 const DEFAULT_SETTINGS: UserSettings = {
-  region: 'SK',
+  regionCode: 'SK',
   maxResults: 12,
   includeShorts: false,
+  order: 'mostPopular',
 };
 
 export function useSettings() {
@@ -12,21 +15,25 @@ export function useSettings() {
   const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem('userSettings');
-    if (stored) {
-      try {
-        setSettings(JSON.parse(stored));
-      } catch (e) {
-        console.error('Failed to parse stored settings:', e);
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('userSettings');
+      if (stored) {
+        try {
+          setSettings(JSON.parse(stored));
+        } catch (e) {
+          console.error('Failed to parse stored settings:', e);
+        }
       }
+      setIsLoaded(true);
     }
-    setIsLoaded(true);
   }, []);
 
   const updateSettings = (newSettings: Partial<UserSettings>) => {
     setSettings((prev) => {
       const updated = { ...prev, ...newSettings };
-      localStorage.setItem('userSettings', JSON.stringify(updated));
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('userSettings', JSON.stringify(updated));
+      }
       return updated;
     });
   };
