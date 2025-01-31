@@ -1,5 +1,3 @@
-'use client';
-
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { ModeToggle } from './ModeToggle';
@@ -53,6 +51,7 @@ const resultCountOptions = [8, 12, 24, 48];
 
 const Header: React.FC<HeaderProps> = ({ settings, onSettingsChange }) => {
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
+  const [isMobileSearchVisible, setIsMobileSearchVisible] = useState(false);
   const [localSearchQuery, setLocalSearchQuery] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -71,7 +70,6 @@ const Header: React.FC<HeaderProps> = ({ settings, onSettingsChange }) => {
       clearTimeout(searchTimeoutRef.current);
     }
 
-    // Len ak je query prázdna alebo má aspoň 3 znaky
     if (query === '' || query.length >= 3) {
       searchTimeoutRef.current = setTimeout(() => {
         onSettingsChange({ searchQuery: query });
@@ -97,8 +95,8 @@ const Header: React.FC<HeaderProps> = ({ settings, onSettingsChange }) => {
             </Link>
           </div>
 
-          {/* Vyhľadávanie a región */}
-          <div className="flex max-w-2xl flex-1 items-center justify-center gap-2">
+          {/* Desktop vyhľadávanie */}
+          <div className="hidden max-w-2xl flex-1 items-center justify-center gap-2 md:flex">
             <div className="relative flex-1">
               <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
               <Input
@@ -114,6 +112,7 @@ const Header: React.FC<HeaderProps> = ({ settings, onSettingsChange }) => {
             <RegionSelect
               value={settings?.regionCode || defaultRegionCode}
               onChange={(value) => onSettingsChange({ regionCode: value })}
+              className="flex-shrink-0"
             />
             <Button
               variant="ghost"
@@ -123,7 +122,34 @@ const Header: React.FC<HeaderProps> = ({ settings, onSettingsChange }) => {
               {isFilterExpanded ? (
                 <ChevronUp className="h-4 w-4" />
               ) : (
-                <ListFilterPlus className="h-12 w-12" />
+                <ListFilterPlus className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+
+          {/* Mobilné ovládacie prvky */}
+          <div className="flex items-center gap-2 md:hidden">
+            <Button
+              variant="ghost"
+              onClick={() => setIsMobileSearchVisible(!isMobileSearchVisible)}
+              className="p-2"
+            >
+              <Search className="h-5 w-5" />
+            </Button>
+            <RegionSelect
+              value={settings?.regionCode || defaultRegionCode}
+              onChange={(value) => onSettingsChange({ regionCode: value })}
+              className="flex-shrink-0"
+            />
+            <Button
+              variant="ghost"
+              onClick={() => setIsFilterExpanded(!isFilterExpanded)}
+              className="p-2"
+            >
+              {isFilterExpanded ? (
+                <ChevronUp className="h-5 w-5" />
+              ) : (
+                <ListFilterPlus className="h-5 w-5" />
               )}
             </Button>
           </div>
@@ -131,6 +157,24 @@ const Header: React.FC<HeaderProps> = ({ settings, onSettingsChange }) => {
           {/* Pravá strana */}
           <ModeToggle />
         </div>
+
+        {/* Mobilné vyhľadávanie */}
+        {isMobileSearchVisible && (
+          <div className="py-2 md:hidden">
+            <div className="relative">
+              <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+              <Input
+                placeholder="Vyhľadať videá..."
+                value={localSearchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                className="w-full pl-10"
+              />
+              {isLoading && localSearchQuery.length >= 3 && (
+                <Loader className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 animate-spin" />
+              )}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Rozšírený filter */}
@@ -141,7 +185,7 @@ const Header: React.FC<HeaderProps> = ({ settings, onSettingsChange }) => {
               {/* Počet výsledkov */}
               <div className="flex items-center gap-4">
                 <Label className="min-w-32">Počet výsledkov</Label>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {resultCountOptions.map((count, index) => (
                     <Button
                       key={`result-count-${index}`}
@@ -158,7 +202,7 @@ const Header: React.FC<HeaderProps> = ({ settings, onSettingsChange }) => {
               </div>
 
               {/* Zoradenie a Bezpečnostný filter */}
-              <div className="flex gap-4">
+              <div className="flex flex-col gap-4 md:flex-row">
                 <div className="flex-1">
                   <Label className="mb-2 block">Zoradiť podľa</Label>
                   <Select
@@ -206,14 +250,14 @@ const Header: React.FC<HeaderProps> = ({ settings, onSettingsChange }) => {
               </div>
 
               {/* Dátum publikovania */}
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col gap-4 md:flex-row md:items-center">
                 <Label className="min-w-32">Publikované</Label>
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   <Popover>
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className="w-48 justify-start text-left font-normal"
+                        className="w-full justify-start text-left font-normal md:w-48"
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {settings.publishedAfter
@@ -245,7 +289,7 @@ const Header: React.FC<HeaderProps> = ({ settings, onSettingsChange }) => {
                     <PopoverTrigger asChild>
                       <Button
                         variant="outline"
-                        className="w-48 justify-start text-left font-normal"
+                        className="w-full justify-start text-left font-normal md:w-48"
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
                         {settings.publishedBefore
