@@ -12,6 +12,14 @@ const Home: React.FC = () => {
   const { settings, updateSettings, isLoaded } = useSettings();
   const { videos, isLoading, error } = useYouTubeTrending(settings);
 
+  if (!isLoaded) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="text-primary h-8 w-8 animate-spin" />
+      </div>
+    );
+  }
+
   const renderContent = () => {
     if (isLoading) {
       return (
@@ -31,7 +39,7 @@ const Home: React.FC = () => {
       );
     }
 
-    if (!videos.length) {
+    if (!videos?.length) {
       return (
         <Alert className="mb-6">
           <AlertDescription>
@@ -45,24 +53,21 @@ const Home: React.FC = () => {
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {videos.map((video) => (
           <VideoCard
-            key={video.id}
-            videoId={video.id}
+            key={String(video.id)}
+            videoId={
+              typeof video.id === 'string' ? video.id : video.id?.videoId || ''
+            }
             title={video.snippet.title}
             thumbnail={video.snippet.thumbnails.high.url}
             channelTitle={video.snippet.channelTitle}
+            channelThumbnail={video.snippet.channelThumbnail || ''}
+            viewCount={video.statistics?.viewCount || '0'}
+            publishedAt={video.snippet.publishedAt}
           />
         ))}
       </div>
     );
   };
-
-  if (!isLoaded) {
-    return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="text-primary h-8 w-8 animate-spin" />
-      </div>
-    );
-  }
 
   return (
     <>

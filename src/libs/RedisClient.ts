@@ -1,4 +1,5 @@
 'use server';
+
 import Redis from 'ioredis';
 
 let redisClient: Redis | null = null;
@@ -6,14 +7,14 @@ let retryCount = 0;
 const MAX_RETRIES = 5;
 const RETRY_INTERVAL = 3 * 60 * 1000; // 3 minúty v milisekundách
 
-// Funkcia na kontrolu, či je Redis povolený
+// Interná záložná cache
+const memoryCache = new Map<string, { value: string; expiresAt: number }>();
+
 function isRedisEnabled(): boolean {
   return process.env.REDIS_ON?.toLowerCase() === 'true';
 }
 
-// Funkcia na vytvorenie Redis klienta
 function createRedisClient() {
-  // Ak Redis nie je povolený, vrátime null
   if (!isRedisEnabled()) {
     console.log('ℹ️ Redis je vypnutý (REDIS_ON nie je nastavené na "true")');
     return null;
@@ -29,34 +30,33 @@ function createRedisClient() {
         console.error(
           '❌ Redis: Presiahol maximálny počet pokusov o pripojenie.'
         );
-        return null; // Ukončíme pokusy o pripojenie
+        return null;
       }
       console.warn(`⚠️ Redis: Pokus o pripojenie #${times}, skúšam znova...`);
-      return Math.min(times * 200, 2000); // Exponenciálne čakanie (max 2 sekundy)
+      return Math.min(times * 200, 2000);
     },
-    maxRetriesPerRequest: 3, // Ak požiadavka zlyhá 3x, vráti chybu
+    maxRetriesPerRequest: 3,
   });
 
   client.on('error', (err) => {
     console.error('❌ Redis error:', err);
     if (++retryCount >= MAX_RETRIES) {
-      redisClient = null; // Deaktivujeme Redis
+      redisClient = null;
       console.log(
         `⏳ Opätovný pokus o pripojenie k Redis prebehne o 3 minúty.`
       );
-      setTimeout(() => reconnectRedis(), RETRY_INTERVAL);
+      setTimeout(reconnectRedis, RETRY_INTERVAL);
     }
   });
 
   client.on('connect', () => {
     console.log('✅ Connected to Redis');
-    retryCount = 0; // Resetujeme počet pokusov
+    retryCount = 0;
   });
 
   return client;
 }
 
-// Prvý pokus o pripojenie
 try {
   redisClient = createRedisClient();
 } catch (error) {
@@ -64,7 +64,6 @@ try {
   redisClient = null;
 }
 
-// Funkcia na opätovný pokus o pripojenie po 3 minútach
 function reconnectRedis() {
   if (!redisClient && isRedisEnabled()) {
     console.log('🔄 Opätovne sa pokúšam pripojiť k Redis...');
@@ -72,7 +71,6 @@ function reconnectRedis() {
   }
 }
 
-// Funkcie pre Redis s fallbackom
 export async function setCache(
   key: string,
   value: string,
@@ -88,17 +86,28 @@ export async function setCache(
     } catch (err) {
       console.error('❌ Redis setCache error:', err);
     }
+  } else {
+    const expiresAt = ttl ? Date.now() + ttl * 1000 : Number.MAX_SAFE_INTEGER;
+    memoryCache.set(key, { value, expiresAt });
   }
 }
 
 export async function getCache(key: string): Promise<string | null> {
-  if (!redisClient) return null;
-  try {
-    return await redisClient.get(key);
-  } catch (err) {
-    console.error('❌ Redis getCache error:', err);
-    return null;
+  if (redisClient) {
+    try {
+      return await redisClient.get(key);
+    } catch (err) {
+      console.error('❌ Redis getCache error:', err);
+    }
+  } else {
+    const entry = memoryCache.get(key);
+    if (entry && entry.expiresAt > Date.now()) {
+      return entry.value;
+    } else {
+      memoryCache.delete(key);
+    }
   }
+  return null;
 }
 
 export async function delCache(key: string): Promise<void> {
@@ -108,6 +117,8 @@ export async function delCache(key: string): Promise<void> {
     } catch (err) {
       console.error('❌ Redis delCache error:', err);
     }
+  } else {
+    memoryCache.delete(key);
   }
 }
 

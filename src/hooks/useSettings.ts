@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { UserSettings } from '@/types/settings';
+import { defaultRegionCode } from '@/constants/regions';
 
 const DEFAULT_SETTINGS: UserSettings = {
-  regionCode: 'SK',
+  regionCode: defaultRegionCode,
   maxResults: 12,
   includeShorts: false,
   order: 'mostPopular',

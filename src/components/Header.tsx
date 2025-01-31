@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
+import Link from 'next/link';
 import { ModeToggle } from './ModeToggle';
-import { Play, Search, ChevronDown, ChevronUp } from 'lucide-react';
+import { Play, Search, ListFilterPlus, ChevronUp, Loader } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import RegionSelect from '@/components/RegionSelect';
@@ -25,6 +26,7 @@ import {
 import { format } from 'date-fns';
 import { sk } from 'date-fns/locale';
 import { CalendarIcon } from 'lucide-react';
+import { defaultRegionCode } from '@/constants/regions';
 
 interface HeaderProps {
   settings: UserSettings;
@@ -51,13 +53,34 @@ const resultCountOptions = [8, 12, 24, 48];
 
 const Header: React.FC<HeaderProps> = ({ settings, onSettingsChange }) => {
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [localSearchQuery, setLocalSearchQuery] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (settings) {
-      setSearchQuery(settings.searchQuery || '');
+      setLocalSearchQuery(settings.searchQuery || '');
     }
   }, [settings]);
+
+  const handleSearchChange = (query: string) => {
+    setLocalSearchQuery(query);
+    setIsLoading(true);
+
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Len ak je query prázdna alebo má aspoň 3 znaky
+    if (query === '' || query.length >= 3) {
+      searchTimeoutRef.current = setTimeout(() => {
+        onSettingsChange({ searchQuery: query });
+        setIsLoading(false);
+      }, 500);
+    } else {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <header className="dark:bg-background sticky top-0 z-50 w-full bg-white">
@@ -66,10 +89,12 @@ const Header: React.FC<HeaderProps> = ({ settings, onSettingsChange }) => {
         <div className="flex h-14 items-center justify-between gap-4">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <div className="text-primary flex items-center gap-2 transition-colors">
-              <Play className="h-6 w-6" />
-              <span className="text-xl font-bold">TrendWatch</span>
-            </div>
+            <Link href="/">
+              <div className="text-primary flex items-center gap-2 transition-colors">
+                <Play className="h-6 w-6" />
+                <span className="text-xl font-bold">TrendWatch</span>
+              </div>
+            </Link>
           </div>
 
           {/* Vyhľadávanie a región */}
@@ -78,30 +103,27 @@ const Header: React.FC<HeaderProps> = ({ settings, onSettingsChange }) => {
               <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
               <Input
                 placeholder="Vyhľadať videá..."
-                value={searchQuery}
-                onChange={(e) => {
-                  setSearchQuery(e.target.value);
-                  onSettingsChange({ searchQuery: e.target.value });
-                }}
+                value={localSearchQuery}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="w-full pl-10"
               />
+              {isLoading && localSearchQuery.length >= 3 && (
+                <Loader className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 animate-spin" />
+              )}
             </div>
-            <div className="w-36">
-              <RegionSelect
-                value={settings?.regionCode || 'SK'}
-                onChange={(value) => onSettingsChange({ regionCode: value })}
-              />
-            </div>
+            <RegionSelect
+              value={settings?.regionCode || defaultRegionCode}
+              onChange={(value) => onSettingsChange({ regionCode: value })}
+            />
             <Button
-              variant="outline"
+              variant="ghost"
               onClick={() => setIsFilterExpanded(!isFilterExpanded)}
-              className="gap-2"
+              className="cursor-pointer gap-2 hover:bg-transparent"
             >
-              Filtre
               {isFilterExpanded ? (
                 <ChevronUp className="h-4 w-4" />
               ) : (
-                <ChevronDown className="h-4 w-4" />
+                <ListFilterPlus className="h-12 w-12" />
               )}
             </Button>
           </div>
@@ -120,9 +142,9 @@ const Header: React.FC<HeaderProps> = ({ settings, onSettingsChange }) => {
               <div className="flex items-center gap-4">
                 <Label className="min-w-32">Počet výsledkov</Label>
                 <div className="flex gap-2">
-                  {resultCountOptions.map((count) => (
+                  {resultCountOptions.map((count, index) => (
                     <Button
-                      key={count}
+                      key={`result-count-${index}`}
                       variant={
                         settings.maxResults === count ? 'default' : 'outline'
                       }
