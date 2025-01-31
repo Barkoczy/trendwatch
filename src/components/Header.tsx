@@ -106,7 +106,7 @@ const Header: React.FC<HeaderProps> = ({ settings, onSettingsChange }) => {
                 className="w-full pl-10"
               />
               {isLoading && localSearchQuery.length >= 3 && (
-                <Loader className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 animate-spin" />
+                <Loader className="dark:text-primary absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 animate-spin" />
               )}
             </div>
             <RegionSelect
