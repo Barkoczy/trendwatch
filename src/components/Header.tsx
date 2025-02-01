@@ -5,7 +5,7 @@ import { Play, Search, ListFilterPlus, ChevronUp, Loader } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import RegionSelect from '@/components/RegionSelect';
-import { UserSettings } from '@/types/settings';
+import type { UserSettings } from '@/types/settings';
 import {
   Select,
   SelectContent,
@@ -82,7 +82,7 @@ const Header: React.FC<HeaderProps> = ({ settings, onSettingsChange }) => {
 
   return (
     <header className="dark:bg-background sticky top-0 z-50 w-full bg-white">
-      <div className="container mx-auto px-4">
+      <div className="px-4">
         {/* Hlavný header */}
         <div className="flex h-14 items-center justify-between gap-4">
           {/* Logo */}

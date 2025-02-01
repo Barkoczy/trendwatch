@@ -1,24 +1,9 @@
 import React from 'react';
+import Link from 'next/link';
 import Image from 'next/image';
 import { Card } from '@/components/ui/card';
-import {
-  MoreVertical,
-  Clock,
-  ListPlus,
-  Share2,
-  Ban,
-  ThumbsDown,
-  Flag,
-} from 'lucide-react';
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu';
-import { formatDistanceToNow } from 'date-fns';
-import { sk } from 'date-fns/locale';
-import { formatViews, formatDuration } from '@/utils/helpers';
+import VideoCardMenu from './VideoCardMenu';
+import { formatViews, formatDuration, formatDate } from '@/utils/helpers';
 
 interface VideoCardProps {
   videoId: string;
@@ -44,19 +29,12 @@ const VideoCard: React.FC<VideoCardProps> = ({
   publishedAt,
   duration,
 }) => {
-  const formatDate = (dateString: string) => {
-    return formatDistanceToNow(new Date(dateString), {
-      locale: sk,
-      addSuffix: false,
-    });
-  };
-
   return (
     <Card className="group bg-background border-0 shadow dark:bg-violet-950 dark:shadow-violet-900">
       <div className="space-y-2">
         <div className="relative overflow-hidden rounded-t-lg">
-          <a
-            href={`https://www.youtube.com/watch?v=${videoId}`}
+          <Link
+            href={`/watch/${videoId}`}
             className="relative block w-full pt-[56.25%]"
           >
             <Image
@@ -68,7 +46,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
               placeholder="blur"
               blurDataURL={thumbnail}
             />
-          </a>
+          </Link>
           <div className="absolute right-2 bottom-2 rounded bg-black/80 px-1 text-xs text-white">
             {formatDuration(duration)}
           </div>
@@ -100,40 +78,7 @@ const VideoCard: React.FC<VideoCardProps> = ({
           </div>
 
           <div className="ml-2 flex-shrink-0">
-            <DropdownMenu>
-              <DropdownMenuTrigger className="cursor-pointer rounded-full border-0 p-1 outline-0 hover:bg-transparent">
-                <MoreVertical className="h-5 w-5" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent
-                align="end"
-                className="dark:border-primary w-56 border-white shadow-2xl"
-              >
-                <DropdownMenuItem>
-                  <Clock className="mr-2 h-4 w-4" />
-                  <span>Pozrieť neskôr</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <ListPlus className="mr-2 h-4 w-4" />
-                  <span>Pridať do playlistu</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Share2 className="mr-2 h-4 w-4" />
-                  <span>Zdieľať</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="text-destructive dark:text-red-500">
-                  <Ban className="mr-2 h-4 w-4" />
-                  <span>Nemám záujem</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="text-destructive dark:text-red-500">
-                  <ThumbsDown className="mr-2 h-4 w-4" />
-                  <span>Neodporúčať kanál</span>
-                </DropdownMenuItem>
-                <DropdownMenuItem className="text-destructive dark:text-red-500">
-                  <Flag className="mr-2 h-4 w-4" />
-                  <span>Nahlásiť</span>
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            <VideoCardMenu />
           </div>
         </div>
       </div>

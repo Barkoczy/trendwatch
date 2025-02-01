@@ -3,7 +3,7 @@ import { getCache, setCache } from '@/libs/RedisClient';
 import { UserSettings } from '@/types/settings';
 import { Video } from '@/types/video';
 
-export function useYouTubeTrending(settings: UserSettings) {
+export function useVideos(settings: UserSettings) {
   const [videos, setVideos] = useState<Video[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

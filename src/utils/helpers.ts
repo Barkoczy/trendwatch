@@ -1,4 +1,6 @@
 import type { Video } from '@/types/video';
+import { formatDistanceToNow } from 'date-fns';
+import { sk } from 'date-fns/locale';
 
 // Funkcia na detekciu Shorts videí
 export const isShortsVideo = (video: Video): boolean => {
@@ -95,4 +97,11 @@ export const formatDuration = (duration: string): string => {
   if (!hours && !minutes && !seconds) return '0:00';
 
   return `${h}${m}${s}`;
+};
+
+export const formatDate = (dateString: string) => {
+  return formatDistanceToNow(new Date(dateString), {
+    locale: sk,
+    addSuffix: false,
+  });
 };

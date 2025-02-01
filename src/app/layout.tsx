@@ -1,16 +1,12 @@
 import '@/styles/globals.css';
 import type { Metadata, Viewport } from 'next';
-import { Geist, Geist_Mono } from 'next/font/google';
-import { cn } from '@/utils/shadcn';
+import { Geist } from 'next/font/google';
+import ClientLayout from '@/components/ClientLayout';
 import { ThemeProvider } from '@/providers/ThemeProvider';
+import { cn } from '@/utils/shadcn';
 
-const geistSans = Geist({
+const font = Geist({
   variable: '--font-geist-sans',
-  subsets: ['latin'],
-});
-
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
   subsets: ['latin'],
 });
 
@@ -72,13 +68,14 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body
         className={cn(
-          geistSans.variable,
-          geistMono.variable,
+          font.variable,
           'bg-background min-h-screen font-sans antialiased'
         )}
         suppressHydrationWarning
       >
-        <ThemeProvider>{children}</ThemeProvider>
+        <ThemeProvider>
+          <ClientLayout>{children}</ClientLayout>
+        </ThemeProvider>
       </body>
     </html>
   );

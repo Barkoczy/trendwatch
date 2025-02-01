@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCache, setCache } from '@/libs/RedisClient';
-import { trendingVideos, searchVideos } from '@/libs/YoutubeAPI';
+import { trendingVideos, searchVideos } from '@/libs/YouTubeAPI';
 import { defaultRegionCode } from '@/constants/regions';
 import { isShortsVideo } from '@/utils/helpers';
 import { generateCacheKey, getCacheTTL } from '@/utils/helpers';
