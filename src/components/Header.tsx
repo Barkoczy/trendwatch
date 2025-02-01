@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { ModeToggle } from './ModeToggle';
-import { Play, Search, ListFilterPlus, ChevronUp, Loader } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { ModeToggle } from '@/components/ModeToggle';
+import SearchAutocomplete from '@/components/SearchAutocomplete';
+import { Play, Search, ListFilterPlus, ChevronUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import RegionSelect from '@/components/RegionSelect';
 import type { UserSettings } from '@/types/settings';
@@ -53,7 +53,6 @@ const Header: React.FC<HeaderProps> = ({ settings, onSettingsChange }) => {
   const [isFilterExpanded, setIsFilterExpanded] = useState(false);
   const [isMobileSearchVisible, setIsMobileSearchVisible] = useState(false);
   const [localSearchQuery, setLocalSearchQuery] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
@@ -64,7 +63,6 @@ const Header: React.FC<HeaderProps> = ({ settings, onSettingsChange }) => {
 
   const handleSearchChange = (query: string) => {
     setLocalSearchQuery(query);
-    setIsLoading(true);
 
     if (searchTimeoutRef.current) {
       clearTimeout(searchTimeoutRef.current);
@@ -73,10 +71,7 @@ const Header: React.FC<HeaderProps> = ({ settings, onSettingsChange }) => {
     if (query === '' || query.length >= 3) {
       searchTimeoutRef.current = setTimeout(() => {
         onSettingsChange({ searchQuery: query });
-        setIsLoading(false);
       }, 500);
-    } else {
-      setIsLoading(false);
     }
   };
 
@@ -97,18 +92,12 @@ const Header: React.FC<HeaderProps> = ({ settings, onSettingsChange }) => {
 
           {/* Desktop vyhľadávanie */}
           <div className="hidden max-w-2xl flex-1 items-center justify-center gap-2 md:flex">
-            <div className="relative flex-1">
-              <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-              <Input
-                placeholder="Vyhľadať videá..."
-                value={localSearchQuery}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                className="w-full pl-10"
-              />
-              {isLoading && localSearchQuery.length >= 3 && (
-                <Loader className="dark:text-primary absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 animate-spin" />
-              )}
-            </div>
+            <SearchAutocomplete
+              onSearch={handleSearchChange}
+              localSearchQuery={localSearchQuery}
+              setLocalSearchQuery={setLocalSearchQuery}
+              settings={settings}
+            />
             <RegionSelect
               value={settings?.regionCode || defaultRegionCode}
               onChange={(value) => onSettingsChange({ regionCode: value })}
@@ -161,18 +150,12 @@ const Header: React.FC<HeaderProps> = ({ settings, onSettingsChange }) => {
         {/* Mobilné vyhľadávanie */}
         {isMobileSearchVisible && (
           <div className="py-2 md:hidden">
-            <div className="relative">
-              <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-              <Input
-                placeholder="Vyhľadať videá..."
-                value={localSearchQuery}
-                onChange={(e) => handleSearchChange(e.target.value)}
-                className="w-full pl-10"
-              />
-              {isLoading && localSearchQuery.length >= 3 && (
-                <Loader className="absolute top-1/2 right-3 h-4 w-4 -translate-y-1/2 animate-spin" />
-              )}
-            </div>
+            <SearchAutocomplete
+              onSearch={handleSearchChange}
+              localSearchQuery={localSearchQuery}
+              setLocalSearchQuery={setLocalSearchQuery}
+              settings={settings}
+            />
           </div>
         )}
       </div>
