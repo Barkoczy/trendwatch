@@ -166,7 +166,7 @@ export default async function WatchPage({ params }: Props) {
     <div className="bg-background flex w-full flex-col">
       {/* Video sekcia - full width čierny pruh */}
       <div className="w-full bg-black">
-        <div className="mx-auto max-w-[2160px]">
+        <div className="mx-auto max-w-[1280px]">
           <div className="aspect-video">
             <iframe
               src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
