@@ -4,10 +4,12 @@ import { Video } from '@/types/video';
 const API_KEY = process.env.YOUTUBE_API_KEY;
 const CACHE_DURATION = 3600; // 1 hodina v sekundách
 
-async function getChannelThumbnail(channelId: string): Promise<string> {
-  const cacheKey = `channel_thumbnail:${channelId}`;
-  const cachedThumbnail = await getCache(cacheKey);
-  if (cachedThumbnail) return cachedThumbnail;
+async function getChannelDetails(
+  channelId: string
+): Promise<{ title: string; thumbnail: string }> {
+  const cacheKey = `channel_details:${channelId}`;
+  const cachedDetails = await getCache(cacheKey);
+  if (cachedDetails) return JSON.parse(cachedDetails);
 
   const url = new URL('https://www.googleapis.com/youtube/v3/channels');
   url.searchParams.append('part', 'snippet');
@@ -20,16 +22,107 @@ async function getChannelThumbnail(channelId: string): Promise<string> {
   if (!response.ok) throw new Error(`YouTube API error: ${response.status}`);
 
   const data = await response.json();
-  const thumbnailUrl = data.items[0]?.snippet?.thumbnails?.default?.url || '';
-  if (thumbnailUrl) {
-    // Thumbnail URLs sa menia zriedka, môžeme cachovať dlhšie
-    await setCache(cacheKey, thumbnailUrl, CACHE_DURATION * 2);
-  }
-  return thumbnailUrl;
+  const channel = {
+    title: data.items[0]?.snippet?.title || '',
+    thumbnail: data.items[0]?.snippet?.thumbnails?.default?.url || '',
+  };
+
+  await setCache(cacheKey, JSON.stringify(channel), CACHE_DURATION * 2);
+  return channel;
+}
+
+async function normalizeVideoData(rawVideo: {
+  id: string | { videoId: string };
+  snippet: {
+    channelId: string;
+    title: string;
+    description: string;
+    publishedAt: string;
+    thumbnails: {
+      default: { url: string; width: number; height: number };
+      medium?: { url: string; width: number; height: number };
+      high?: { url: string; width: number; height: number };
+      standard?: { url: string; width: number; height: number };
+      maxres?: { url: string; width: number; height: number };
+    };
+    tags?: string[];
+    categoryId?: string;
+    liveBroadcastContent?: string;
+    defaultLanguage?: string;
+    defaultAudioLanguage?: string;
+  };
+  contentDetails?: {
+    duration?: string;
+    dimension?: string;
+    definition?: string;
+    caption?: string;
+    licensedContent?: boolean;
+    regionRestriction?: {
+      allowed?: string[];
+      blocked?: string[];
+    };
+    projection?: string;
+  };
+  statistics?: {
+    viewCount?: string;
+    likeCount?: string;
+    dislikeCount?: string;
+    favoriteCount?: string;
+    commentCount?: string;
+  };
+}): Promise<Video> {
+  const channelDetails = await getChannelDetails(rawVideo.snippet.channelId);
+
+  return {
+    id: typeof rawVideo.id === 'string' ? rawVideo.id : rawVideo.id.videoId,
+    title: rawVideo.snippet.title,
+    description: rawVideo.snippet.description,
+    publishedAt: rawVideo.snippet.publishedAt,
+    thumbnails: {
+      default: rawVideo.snippet.thumbnails.default,
+      medium: rawVideo.snippet.thumbnails.medium || {
+        url: '',
+        width: 0,
+        height: 0,
+      },
+      high: rawVideo.snippet.thumbnails.high || {
+        url: '',
+        width: 0,
+        height: 0,
+      },
+      standard: rawVideo.snippet.thumbnails.standard,
+      maxres: rawVideo.snippet.thumbnails.maxres,
+    },
+    tags: rawVideo.snippet.tags || [],
+    categoryId: rawVideo.snippet.categoryId || '',
+    liveBroadcastContent: rawVideo.snippet.liveBroadcastContent || 'none',
+    defaultLanguage: rawVideo.snippet.defaultLanguage,
+    defaultAudioLanguage: rawVideo.snippet.defaultAudioLanguage || '',
+    channel: {
+      id: rawVideo.snippet.channelId,
+      title: channelDetails.title,
+      thumbnail: channelDetails.thumbnail,
+    },
+    contentDetails: {
+      duration: rawVideo.contentDetails?.duration || 'PT0S',
+      dimension: rawVideo.contentDetails?.dimension || '2d',
+      definition: rawVideo.contentDetails?.definition || 'hd',
+      caption: rawVideo.contentDetails?.caption || 'false',
+      licensedContent: rawVideo.contentDetails?.licensedContent || false,
+      regionRestriction: rawVideo.contentDetails?.regionRestriction,
+      projection: rawVideo.contentDetails?.projection || 'rectangular',
+    },
+    statistics: {
+      viewCount: rawVideo.statistics?.viewCount || '0',
+      likeCount: rawVideo.statistics?.likeCount || '0',
+      dislikeCount: rawVideo.statistics?.dislikeCount || '0',
+      favoriteCount: rawVideo.statistics?.favoriteCount || '0',
+      commentCount: rawVideo.statistics?.commentCount || '0',
+    },
+  };
 }
 
 async function fetchVideosDetails(videoIds: string[]): Promise<Video[]> {
-  // Cache pre detaily videí
   const cacheKey = `videos_details:${videoIds.join(',')}`;
   const cachedDetails = await getCache(cacheKey);
   if (cachedDetails) return JSON.parse(cachedDetails);
@@ -47,37 +140,49 @@ async function fetchVideosDetails(videoIds: string[]): Promise<Video[]> {
 
   const videos = await Promise.all(
     data.items.map(
-      async (video: {
-        id: string;
-        snippet: { channelId: string };
-        contentDetails: {
-          duration: string;
-          dimension: string;
-          definition: string;
-          caption: string;
-          licensedContent: boolean;
-          projection: string;
-        };
-        statistics: {
-          viewCount: string;
-          likeCount: string;
-          dislikeCount: string;
-          favoriteCount: string;
-          commentCount: string;
-        };
-      }) => ({
-        id: video.id,
+      (video: {
+        id: string | { videoId: string };
         snippet: {
-          ...video.snippet,
-          channelThumbnail: await getChannelThumbnail(video.snippet.channelId),
-        },
-        contentDetails: video.contentDetails,
-        statistics: video.statistics,
-      })
+          channelId: string;
+          title: string;
+          description: string;
+          publishedAt: string;
+          thumbnails: {
+            default: { url: string; width: number; height: number };
+            medium?: { url: string; width: number; height: number };
+            high?: { url: string; width: number; height: number };
+            standard?: { url: string; width: number; height: number };
+            maxres?: { url: string; width: number; height: number };
+          };
+          tags?: string[];
+          categoryId?: string;
+          liveBroadcastContent?: string;
+          defaultLanguage?: string;
+          defaultAudioLanguage?: string;
+        };
+        contentDetails?: {
+          duration?: string;
+          dimension?: string;
+          definition?: string;
+          caption?: string;
+          licensedContent?: boolean;
+          regionRestriction?: {
+            allowed?: string[];
+            blocked?: string[];
+          };
+          projection?: string;
+        };
+        statistics?: {
+          viewCount?: string;
+          likeCount?: string;
+          dislikeCount?: string;
+          favoriteCount?: string;
+          commentCount?: string;
+        };
+      }) => normalizeVideoData(video)
     )
   );
 
-  // Cache detaily videí na kratší čas, keďže sa často menia
   await setCache(cacheKey, JSON.stringify(videos), CACHE_DURATION / 2);
   return videos;
 }
@@ -101,14 +206,15 @@ export async function trendingVideos(regionCode: string, pageToken?: string) {
   if (!response.ok) throw new Error(`YouTube API error: ${response.status}`);
   const data = await response.json();
 
+  const videos = await fetchVideosDetails(
+    data.items.map((video: { id: string }) => video.id)
+  );
+
   const result = {
     ...data,
-    items: await fetchVideosDetails(
-      data.items.map((video: { id: string }) => video.id)
-    ),
+    items: videos,
   };
 
-  // Trending videá sa menia často, cachujeme na kratší čas
   await setCache(cacheKey, JSON.stringify(result), CACHE_DURATION / 4);
   return result;
 }
@@ -153,14 +259,15 @@ export async function searchVideos(params: {
   if (!response.ok) throw new Error(`YouTube API error: ${response.status}`);
   const data = await response.json();
 
+  const videos = await fetchVideosDetails(
+    data.items.map((video: { id: { videoId: string } }) => video.id.videoId)
+  );
+
   const result = {
     ...data,
-    items: await fetchVideosDetails(
-      data.items.map((video: { id: { videoId: string } }) => video.id.videoId)
-    ),
+    items: videos,
   };
 
-  // Výsledky vyhľadávania cachujeme na stredne dlhý čas
   await setCache(cacheKey, JSON.stringify(result), CACHE_DURATION / 2);
   return result;
 }

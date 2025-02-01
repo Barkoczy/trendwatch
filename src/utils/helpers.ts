@@ -1,10 +1,10 @@
+import type { Video } from '@/types/video';
+
 // Funkcia na detekciu Shorts videí
-export const isShortsVideo = (video: {
-  contentDetails: { duration: string };
-  snippet: { description: string; title: string };
-}): boolean => {
-  const duration = video.contentDetails.duration;
+export const isShortsVideo = (video: Video): boolean => {
+  const duration = video.contentDetails?.duration || '';
   const match = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
+
   if (!match) return false;
 
   const hours = parseInt(match[1] || '0');
@@ -12,9 +12,10 @@ export const isShortsVideo = (video: {
   const seconds = parseInt(match[3] || '0');
   const totalSeconds = hours * 3600 + minutes * 60 + seconds;
 
+  // Kontrolujeme #shorts v title a description, ktoré sú teraz v root objektu
   const isShortsByMetadata =
-    video.snippet.description.toLowerCase().includes('#shorts') ||
-    video.snippet.title.toLowerCase().includes('#shorts') ||
+    video.description.toLowerCase().includes('#shorts') ||
+    video.title.toLowerCase().includes('#shorts') ||
     totalSeconds <= 79;
 
   return isShortsByMetadata;
@@ -56,10 +57,42 @@ export const getCacheTTL = (
 // Formátovanie počtu zobrazení
 export const formatViews = (views: number) => {
   if (views >= 1_000_000) {
-    return `${(views / 1_000_000).toFixed(1).replace('.', ',')} mil.`;
+    const millions = Math.round(views / 100_000) / 10;
+    // Odstráni desatinnú čiarku ak je číslo celé
+    const formatted =
+      millions % 1 === 0
+        ? millions.toString()
+        : millions.toString().replace('.', '.');
+    return `${formatted}M`;
   }
+
   if (views >= 1_000) {
-    return `${(views / 1_000).toFixed(1).replace('.', ',')} tis.`;
+    const thousands = Math.round(views / 100) / 10;
+    const formatted =
+      thousands % 1 === 0
+        ? thousands.toString()
+        : thousands.toString().replace('.', '.');
+    return `${formatted}K`;
   }
+
   return views.toString();
+};
+
+// Formátovanie dĺžky videa
+export const formatDuration = (duration: string): string => {
+  const match = duration.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
+
+  if (!match) return '0:00';
+
+  const hours = (match[1] || '').replace('H', '');
+  const minutes = (match[2] || '').replace('M', '');
+  const seconds = (match[3] || '').replace('S', '');
+
+  const h = hours ? `${hours}:` : '';
+  const m = minutes ? `${minutes.padStart(2, '0')}:` : '00:';
+  const s = seconds ? seconds.padStart(2, '0') : '00';
+
+  if (!hours && !minutes && !seconds) return '0:00';
+
+  return `${h}${m}${s}`;
 };

@@ -7,6 +7,7 @@ import { useYouTubeTrending } from '@/hooks/useYouTubeTrending';
 import { useSettings } from '@/hooks/useSettings';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import Header from '@/components/Header';
+import type { Video } from '@/types/video';
 
 const Home: React.FC = () => {
   const { settings, updateSettings, isLoaded } = useSettings();
@@ -51,18 +52,21 @@ const Home: React.FC = () => {
 
     return (
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {videos.map((video) => (
+        {videos.map((video: Video, index: number) => (
           <VideoCard
-            key={String(video.id)}
-            videoId={
-              typeof video.id === 'string' ? video.id : video.id?.videoId || ''
-            }
-            title={video.snippet.title}
-            thumbnail={video.snippet.thumbnails.high.url}
-            channelTitle={video.snippet.channelTitle}
-            channelThumbnail={video.snippet.channelThumbnail || ''}
-            viewCount={video.statistics?.viewCount || '0'}
-            publishedAt={video.snippet.publishedAt}
+            key={index}
+            videoId={video.id}
+            title={video.title}
+            thumbnail={video.thumbnails.high.url}
+            channel={{
+              title: video.channel.title,
+              thumbnail: video.channel.thumbnail,
+            }}
+            statistics={{
+              viewCount: video.statistics.viewCount,
+            }}
+            publishedAt={video.publishedAt}
+            duration={video.contentDetails.duration}
           />
         ))}
       </div>

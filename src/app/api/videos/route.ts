@@ -4,6 +4,7 @@ import { trendingVideos, searchVideos } from '@/libs/YoutubeAPI';
 import { defaultRegionCode } from '@/constants/regions';
 import { isShortsVideo } from '@/utils/helpers';
 import { generateCacheKey, getCacheTTL } from '@/utils/helpers';
+import type { Video } from '@/types/video';
 
 const API_KEY = process.env.YOUTUBE_API_KEY;
 
@@ -28,29 +29,20 @@ export async function GET(request: Request) {
   }
 
   try {
-    // Optimalizovaný kľúč pre cache
     const cacheKey = generateCacheKey(params);
-
-    // Získanie dát z Redis cache
     const cachedData = await getCache(cacheKey);
     if (cachedData) {
       return NextResponse.json(JSON.parse(cachedData));
     }
 
-    let allVideos: Array<{
-      contentDetails: { duration: string };
-      snippet: { description: string; title: string };
-    }> = [];
+    let allVideos: Video[] = [];
     let nextPageToken;
     let attempts = 0;
     const maxAttempts = 5;
 
     while (allVideos.length < params.maxResults && attempts < maxAttempts) {
       const data: {
-        items: Array<{
-          contentDetails: { duration: string };
-          snippet: { description: string; title: string };
-        }>;
+        items: Video[];
         nextPageToken?: string;
       } =
         !params.searchQuery && params.order === 'mostPopular'
@@ -69,6 +61,7 @@ export async function GET(request: Request) {
     }
 
     const finalVideos = allVideos.slice(0, params.maxResults);
+
     const headers = new Headers({
       'X-Total-Videos-Found': allVideos.length.toString(),
       'X-Pages-Fetched': attempts.toString(),
@@ -82,10 +75,9 @@ export async function GET(request: Request) {
         resultsPerPage: params.maxResults,
       },
       nextPageToken,
-      timestamp: Date.now(), // Pridané pre lepšie sledovanie čerstvosti dát
+      timestamp: Date.now(),
     };
 
-    // Dynamické nastavenie TTL podľa typu požiadavky
     const cacheTTL = getCacheTTL(params);
     await setCache(cacheKey, JSON.stringify(responseData), cacheTTL);
 

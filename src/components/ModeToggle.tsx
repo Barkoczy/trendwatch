@@ -39,7 +39,7 @@ export function ModeToggle() {
           <span className="sr-only">Prepnúť tému</span>
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="border-0 shadow-lg outline-0">
         <DropdownMenuItem
           onClick={() => setTheme('light')}
           className="hover:bg-muted cursor-pointer"

@@ -1,23 +1,7 @@
 import { useState, useEffect } from 'react';
 import { getCache, setCache } from '@/libs/RedisClient';
 import { UserSettings } from '@/types/settings';
-
-interface Video {
-  id: string | { videoId?: string; channelId?: string; playlistId?: string };
-  snippet: {
-    title: string;
-    thumbnails: { high: { url: string } };
-    channelTitle: string;
-    channelId: string; // Pridané pre získanie obrázku kanála
-    publishedAt: string; // Pridané pre dátum publikovania
-    channelThumbnail?: string; // Pridané pre obrázok kanála
-  };
-  statistics?: {
-    viewCount: string; // Pridané pre počet videní
-    likeCount: string;
-    commentCount: string;
-  };
-}
+import { Video } from '@/types/video';
 
 export function useYouTubeTrending(settings: UserSettings) {
   const [videos, setVideos] = useState<Video[]>([]);
