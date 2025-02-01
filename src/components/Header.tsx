@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { ModeToggle } from '@/components/ModeToggle';
 import SearchAutocomplete from '@/components/SearchAutocomplete';
-import { Play, Search, ListFilterPlus, ChevronUp } from 'lucide-react';
+import { Play, Search, ListFilterPlus, ChevronUp, History } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import RegionSelect from '@/components/RegionSelect';
 import type { UserSettings } from '@/types/settings';
@@ -81,13 +81,24 @@ const Header: React.FC<HeaderProps> = ({ settings, onSettingsChange }) => {
         {/* Hlavný header */}
         <div className="flex h-14 items-center justify-between gap-4">
           {/* Logo */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-4">
             <Link href="/">
               <div className="text-primary flex items-center gap-2 transition-colors">
                 <Play className="h-6 w-6" />
-                <span className="text-xl font-bold">TrendWatch</span>
+                <span className="hidden text-xl font-bold sm:inline">
+                  TrendWatch
+                </span>
               </div>
             </Link>
+            <div className="ms-5 flex items-center gap-2">
+              <Link
+                href="/history"
+                className="text-muted-foreground hover:text-primary hidden items-center gap-2 md:flex"
+              >
+                <History className="h-4 w-4" />
+                <span>História</span>
+              </Link>
+            </div>
           </div>
 
           {/* Desktop vyhľadávanie */}
@@ -118,6 +129,9 @@ const Header: React.FC<HeaderProps> = ({ settings, onSettingsChange }) => {
 
           {/* Mobilné ovládacie prvky */}
           <div className="flex items-center gap-2 md:hidden">
+            <Link href="/history" className="p-2">
+              <History className="h-4 w-4" />
+            </Link>
             <Button
               variant="ghost"
               onClick={() => setIsMobileSearchVisible(!isMobileSearchVisible)}

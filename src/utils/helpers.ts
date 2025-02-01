@@ -1,4 +1,9 @@
 import type { Video } from '@/types/video';
+import type {
+  HistoryEntry,
+  HistoryPeriod,
+  GroupedHistory,
+} from '@/types/history';
 import { formatDistanceToNow } from 'date-fns';
 import { sk } from 'date-fns/locale';
 
@@ -99,9 +104,51 @@ export const formatDuration = (duration: string): string => {
   return `${h}${m}${s}`;
 };
 
+// Formátovanie dátumu
 export const formatDate = (dateString: string) => {
   return formatDistanceToNow(new Date(dateString), {
     locale: sk,
     addSuffix: false,
   });
+};
+
+// Helper funkcia na kontrolu či je dátum v aktuálnom týždni
+export const isThisWeek = (date: Date): boolean => {
+  const now = new Date();
+  const weekStart = new Date(now.setDate(now.getDate() - now.getDay()));
+  const weekEnd = new Date(now.setDate(now.getDate() - now.getDay() + 6));
+  return date >= weekStart && date <= weekEnd;
+};
+
+// Funkcia na zoskupenie histórie podľa dátumu
+export const groupHistoryByPeriod = (
+  history: HistoryEntry[]
+): GroupedHistory => {
+  const today = new Date();
+  const yesterday = new Date(today);
+  yesterday.setDate(yesterday.getDate() - 1);
+
+  const periods: HistoryPeriod[] = ['Dnes', 'Včera', 'Tento týždeň', 'Staršie'];
+  const initialGroups = periods.reduce((acc, period) => {
+    acc[period] = [];
+    return acc;
+  }, {} as GroupedHistory);
+
+  return history.reduce((grouped, entry) => {
+    const watchDate = new Date(entry.watchedAt);
+
+    let period: HistoryPeriod;
+    if (watchDate.toDateString() === today.toDateString()) {
+      period = 'Dnes';
+    } else if (watchDate.toDateString() === yesterday.toDateString()) {
+      period = 'Včera';
+    } else if (isThisWeek(watchDate)) {
+      period = 'Tento týždeň';
+    } else {
+      period = 'Staršie';
+    }
+
+    grouped[period].push(entry);
+    return grouped;
+  }, initialGroups);
 };

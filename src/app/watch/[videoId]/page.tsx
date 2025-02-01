@@ -1,5 +1,6 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { addToWatchHistory } from '@/libs/WatchHistory';
 import VideoInfo from '@/components/VideoInfo';
 import RelatedVideosSidebar from '@/components/RelatedVideosSidebar';
 import type { Video } from '@/types/video';
@@ -139,6 +140,8 @@ export default async function WatchPage({ params }: Props) {
   if (!video) {
     notFound();
   }
+
+  await addToWatchHistory(video);
 
   return (
     <div className="bg-background flex w-full flex-col">
