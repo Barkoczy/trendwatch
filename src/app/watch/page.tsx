@@ -1,11 +1,12 @@
 import { redirect } from 'next/navigation';
 
-interface PageProps {
-  searchParams: { [key: string]: string | undefined };
-}
+type PageProps = {
+  searchParams: Promise<{ [key: string]: string | undefined }>;
+};
 
-export default function WatchPage({ searchParams }: PageProps) {
-  const videoId = searchParams.v;
+export default async function WatchPage({ searchParams }: PageProps) {
+  const params = await searchParams;
+  const videoId = params.v;
 
   if (videoId) {
     redirect(`/watch/${videoId}`);

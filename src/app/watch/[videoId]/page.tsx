@@ -4,17 +4,19 @@ import VideoInfo from '@/components/VideoInfo';
 import RelatedVideosSidebar from '@/components/RelatedVideosSidebar';
 import type { Video } from '@/types/video';
 
-interface Props {
-  params: {
+type Props = {
+  params: Promise<{
     videoId: string;
-  };
-}
+  }>;
+};
 
 async function fetchVideoData(videoId: string): Promise<Video | null> {
   try {
     // Použijeme absolútnu URL
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-    const res = await fetch(`${baseUrl}/api/video/${videoId}`, {
+    const params = new URLSearchParams();
+    params.append('videoId', videoId);
+    const res = await fetch(`${baseUrl}/api/video?${params.toString()}`, {
       next: { revalidate: 3600 },
     });
 
