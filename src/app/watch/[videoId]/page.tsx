@@ -1,6 +1,5 @@
 import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { addToWatchHistory } from '@/libs/WatchHistory';
 import VideoInfo from '@/components/VideoInfo';
 import RelatedVideosSidebar from '@/components/RelatedVideosSidebar';
 import type { Video } from '@/types/video';
@@ -141,7 +140,27 @@ export default async function WatchPage({ params }: Props) {
     notFound();
   }
 
-  await addToWatchHistory(video);
+  try {
+    const response = await fetch(
+      `${process.env.NEXT_PUBLIC_BASE_URL}/api/history`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ video }),
+      }
+    );
+
+    if (!response.ok) {
+      console.error(
+        'Chyba pri pridávaní videa do histórie:',
+        response.statusText
+      );
+    }
+  } catch (error) {
+    console.error('Chyba pri pridávaní videa do histórie:', error);
+  }
 
   return (
     <div className="bg-background flex w-full flex-col">

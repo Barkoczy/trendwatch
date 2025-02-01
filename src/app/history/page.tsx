@@ -1,4 +1,3 @@
-import { getWatchHistory } from '@/libs/WatchHistory';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
@@ -11,10 +10,6 @@ export const metadata = {
 };
 
 export default async function HistoryPage() {
-  const page = 1;
-  const pageSize = 50;
-  const { items: historyData, hasMore } = await getWatchHistory(page, pageSize);
-
   return (
     <div className="container mx-auto max-w-7xl p-6">
       <div className="mb-8 flex items-center justify-between">
@@ -39,12 +34,7 @@ export default async function HistoryPage() {
 
         <TabsContent value="all" className="mt-0">
           <ScrollArea className="h-[calc(100vh-12rem)]">
-            <HistoryVideoList
-              historyData={historyData}
-              hasMore={hasMore}
-              currentPage={page}
-              pageSize={pageSize}
-            />
+            <HistoryVideoList />
           </ScrollArea>
         </TabsContent>
 
